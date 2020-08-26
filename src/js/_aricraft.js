@@ -8,6 +8,7 @@ class Aricraft{
         this.Aricraft = new PIXI.Sprite(PIXI.loader.resources['images/ace.png'].texture);
         this.Aricraft.vx = 0;
         this.Aricraft.vy = 0;
+
         this.Aricraft.isInvincible = false;  //无敌
         this.bindKeyboard();
         return this.Aricraft;
@@ -85,6 +86,7 @@ class Aricraft{
             yoyoEase:true
         });
         this.Aricraft.tint = color;
+        // TODO:注释后飞机无敌
         setTimeout(()=>{
             this.Aricraft.isInvincible = false;
             this.Aricraft.tint = 0xFFFFFF;

@@ -25,7 +25,8 @@ body{
         @include wh(100%,100%);
         @include fj(center);
         align-items: center;
-        background: $bgcolor;
+        // background: $bgcolor url('../images/load_bg.jpg') no-repeat;
+        background: url('../images/load_bg.jpg') no-repeat;
         >h1{
             margin:0;
             color:$light;
@@ -160,7 +161,6 @@ body{
                         // background-size: 100% 100%;
                     }
                 }
-               
             }
         }  
         .userinfo-container{
@@ -224,6 +224,7 @@ body{
 
 @media screen and (min-width: 750px){
     .app{
-        @include wh(375px,812px);
+        // @include wh(375px,812px);
+        @include wh(395px,812px);
     }
 }

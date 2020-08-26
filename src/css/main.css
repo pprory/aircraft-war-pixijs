@@ -33,7 +33,7 @@ body {
     -webkit-justify-content: center;
     justify-content: center;
     align-items: center;
-    background: #2a2a2a; }
+    background: url("../images/load_bg.jpg") no-repeat; }
     .app .load-container > h1 {
       margin: 0;
       color: #eee;
@@ -219,5 +219,5 @@ body {
 
 @media screen and (min-width: 750px) {
   .app {
-    width: 375px;
+    width: 395px;
     height: 812px; } }

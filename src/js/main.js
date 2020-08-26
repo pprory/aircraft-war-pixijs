@@ -16,8 +16,10 @@ function load(){
         'images/ace.png',  //飞机图
         'images/bullet.png',//子弹图
         'images/bullet2.png',//子弹图
+        'images/bullet0.png',//子弹图
         'images/enemy1.png',//敌军
         'images/boom.png',//爆炸
+        'images/boss.png',//敌机
     ]).load(function(){
         document.querySelector('.app').appendChild(app.view);
         _Main = new Main();
@@ -127,25 +129,30 @@ class Main{
         this.bulletArr.forEach( (item,index) => {
             item.position.y += item.vy;
             if(item.isDest){
-                item.alpha = 0;
                 this.bulletArr.splice(index,1)
                 this.container.removeChild(item);
             }else if(item.position.y<0){
                 // 销毁子弹
-                this.container.removeChild(item);
                 this.bulletArr.splice(index,1)
+                this.container.removeChild(item);
             } 
         })      
         /* 敌军位置 */
         this.enemyArr.forEach( (item,index) => {
             item.position.y+=item.vy;
+            item.position.x+=item.vx;
             if(item.health === 0){
-                this.setIntegral(1);
+                this.setIntegral(item.coin);
                 item.alpha = 0;
                 this.enemyArr.splice(index,1);
                 // item.visible = false;
                 // 爆炸效果
-
+                if(item.isBoos){
+                    clearInterval(item.timer);
+                    setTimeout(()=>{
+                        this.createEnemy(this.enemyRefreshSpeed -= 28)
+                    },1500)
+                }
                 this.boomPlay(item.position.x + item.width / 2 , item.position.y + item.height / 2 + 15);
                 this.ParticleContainer.removeChild(item);
             }
@@ -153,6 +160,11 @@ class Main{
                 this.container.removeChild(item);
                 clearInterval(item.timer);
                 this.enemyArr.splice(index,1)
+            }
+            if(item.position.x>$('.app').width() - item.width){
+                item.vx = -0.5;
+            }else if(item.position.x<0){
+                item.vx = 0.5;
             }
             this.bulletArr.forEach( bullet => {
                 if(item.health === 0) return;
@@ -175,13 +187,14 @@ class Main{
             item.position.y += item.vy;
             if(item.position.y>$('.app').height()+20 || item.position.y<-20 || item.position.x>$('.app').width()+20 || item.position.x < -20){
                 this.enemy_bulletArr.splice(index,1);
+                this.container.removeChild(item);
                 this.ParticleContainer.removeChild(item);
             }
             if(!item.isDest&&(!this.aricraftSprite.isInvincible)&&hitTestRectangle(item,this.aricraftSprite)){
                 item.isDest = true;
                 this.enemy_bulletArr.splice(index,1);
                 this.ParticleContainer.removeChild(item);
-
+                this.container.removeChild(item);
                 this.setHealth();
             }
         })
@@ -201,6 +214,7 @@ class Main{
             this.container.addChild(_item);
         }
         app.stage.addChild(this.container);
+       
     }
     /* 创建地图 */
     createMap (){
@@ -218,6 +232,9 @@ class Main{
         this.aricraftSprite.scale.y = 0.6;
         this.aricraftSprite.position.x = $('.app').width() / 2 - this.aricraftSprite.width/2;
         this.aricraftSprite.position.y = $('.app').height() - this.aricraftSprite.height - 30;
+
+        this.aricraftSprite.width = this.aricraftSprite.width * 0.8;
+        this.aricraftSprite.height = this.aricraftSprite.height * 0.8;
         this.container.addChild(this.aricraftSprite);
 
         this.aricraftSprite.interactive = true;
@@ -240,6 +257,7 @@ class Main{
             this.aricraftSprite.removeListener('pointermove')
         })
 
+        
     }
     /* 创建子弹 */
     createBullet (){
@@ -251,6 +269,7 @@ class Main{
     }
     /* 创建敌军 */
     createEnemy (time = this.enemyRefreshSpeed){
+        console.log('生成',this.enemyRefreshSpeed)
         this.timer = setInterval(()=>{
             let _enemy =  this.enemy.init(50+Math.random()*$('.app').width()-70,-150);
             this.container.addChild(_enemy);
@@ -271,14 +290,31 @@ class Main{
     }
     /* 设置积分 */
     setIntegral (value){
+        
+
+
+     /*    if(this.integral.value === 10){
+            clearInterval(this.timer);
+            toast('boss即将上场')
+            this.createBoss();
+        } */
         this.integral.value += value;
         $('.int-value').html(this.integral.value);
         calcRankingList(this.integral.value);
-        if(this.integral.value <5 || this.enemyRefreshSpeed < 510) return
-        if(this.integral.value % 8 === 0){
-            console.log(this.enemyRefreshSpeed)
+        /* 提升出怪速度 */
+
+        if(this.integral.value % 50 === 0&& this.integral.value!==0){
             clearInterval(this.timer);
-            this.createEnemy(this.enemyRefreshSpeed -= 28)
+            toast('boss即将上场');
+            setTimeout(()=>{
+                this.createBoss();
+            },3000)
+        }else{
+            /* if(this.integral.value <5 || this.enemyRefreshSpeed < 510) return
+            if(this.integral.value % 8 === 0){
+                clearInterval(this.timer);
+                this.createEnemy(this.enemyRefreshSpeed -= 28)
+            } */
         }
     }
     /* 生命值状态显示 */
@@ -340,19 +376,33 @@ class Main{
             $('.ranking-list-box').show();
         })
     }
-    /* 敌机开火 */
-    fire (){
+    /* 敌机开火 
+        px 子弹初始位置
+        py 子弹初始位置
+        sprite 子弹纹理
+        bullet_X 子弹X轴偏移量
+        bullet_y 子弹y轴偏移量
+        r 旋转
+
+        不传参数即为普通战机子弹
+    */
+    fire (px,py,sprite,bullet_X,bullet_Y,r){
         this.enemyArr.forEach( (item,index) => {
-            let x = item.x + item.width/2 + 10;
-            let y = item.y + item.height/2 + 40;
+            let x = px || item.x + item.width/2 + 10; //子弹初始X轴位置
+            let y = py || item.y + item.height/2 + 40;//子弹初始y轴位置
+            let texture = sprite || new PIXI.Sprite(PIXI.loader.resources['images/bullet2.png'].texture)
             let rotation = Math.atan2( x - (this.aricraftSprite.x+this.aricraftSprite.width / 2 + 10),y - (this.aricraftSprite.y+this.aricraftSprite.height/2) );
+            let bulletX = bullet_X || -Math.cos(rotation)*3;
+            let bulletY = bullet_Y || -Math.sin(rotation)*3;
+            let _r = r || rotation
             let circle_bullet = this.bullet.init(
-                new PIXI.Sprite(PIXI.loader.resources['images/bullet2.png'].texture),
-                20,20,-Math.cos(rotation)*6,-Math.sin(rotation)*6,rotation
+                texture,
+                20,20,bulletX,bulletY,-_r
             )  
             circle_bullet.position.set(x,y);
             this.enemy_bulletArr.push(circle_bullet);
             this.ParticleContainer.addChild(circle_bullet);
+            // this.container.addChild(circle_bullet);
         })   
     }
     /* 重置 */
@@ -374,13 +424,64 @@ class Main{
         });
     }
     /* 爆炸 */
-    boomPlay(x,y){
+    boomPlay (x,y){
         let _boom =  this.boom.play(x,y);
         this.container.addChild(_boom);
 
         setTimeout(()=>{
             this.container.removeChild(_boom);
         },1000)
+    }
+    /* boss战 */
+    createBoss (){
+        let _enemy =  this.enemy.boss($('.app').width()/2 - 225/2,-150);
+        _enemy.tint = '0x'+Math.floor(Math.random() * 16777216).toString(16);
+        _enemy.isBoos = true;
+        setTimeout(()=>{
+            _enemy.vy = 0;
+            setTimeout(()=>{
+                _enemy.vx = 0.5;
+            },500)
+        },2400)
+        _enemy.timer = setInterval(() => {
+            let texture_A = PIXI.loader.resources['images/bullet2.png'].texture;
+            let texture_B = PIXI.loader.resources['images/bullet0.png'].texture;
+            var circle_bullet_A = this.bullet.init(
+                new PIXI.Sprite(texture_B),           //右侧主炮
+                20,20,4.1,-0.7,0
+            )  
+            circle_bullet_A.position.set(_enemy.x + _enemy.width/2 - 85,_enemy.y + _enemy.height/2 + 50);
+            this.enemy_bulletArr.push(circle_bullet_A);
+            this.container.addChild(circle_bullet_A);
+
+            var circle_bullet_B = this.bullet.init(   //右侧副炮
+                new PIXI.Sprite(texture_A),
+                20,20,4.1,-0.3,0
+            )  
+            circle_bullet_B.position.set(_enemy.x + _enemy.width/2 - 35,_enemy.y + _enemy.height/2 + 60);
+            this.enemy_bulletArr.push(circle_bullet_B);
+            this.ParticleContainer.addChild(circle_bullet_B);
+
+
+            var circle_bullet_D = this.bullet.init(
+                new PIXI.Sprite(texture_A),           //左侧主炮
+                20,20,4.1,0.3,0
+            )  
+            circle_bullet_D.position.set(_enemy.x + _enemy.width/2 + 15,_enemy.y + _enemy.height/2 + 60);
+            this.enemy_bulletArr.push(circle_bullet_D);
+            this.ParticleContainer.addChild(circle_bullet_D);
+
+
+            var circle_bullet_C = this.bullet.init(
+                new PIXI.Sprite(texture_B),           //左侧主炮
+                20,20,4.1,0.7,0
+            )  
+            circle_bullet_C.position.set(_enemy.x + _enemy.width/2 + 65,_enemy.y + _enemy.height/2 + 50);
+            this.enemy_bulletArr.push(circle_bullet_C);
+            this.container.addChild(circle_bullet_C);
+        }, 600);
+        this.container.addChild(_enemy);
+        this.enemyArr.push(_enemy);
     }
 }
 
