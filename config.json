@@ -1,0 +1,8 @@
+{
+    "development": {
+      "apiUrl": "127.0.0.1:3000/game"
+    },
+    "production": {
+      "apiUrl": "47.94.17.117/game"
+    }
+  }
