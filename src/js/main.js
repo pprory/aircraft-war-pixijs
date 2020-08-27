@@ -54,7 +54,7 @@ class Main{
 
         this.aricraft = new Aricraft();
         this.aricraftSprite = this.aricraft.init();
-
+        this.aricraftHot = {x:null,y:null};
         this.bullet = new Bullet(); //子弹实例
         this.bulletArr = []; //子弹池
 
@@ -91,7 +91,7 @@ class Main{
         this.enemy_bulletArr = [];//敌军子弹池
 
         this.boom = new Boom(); //爆炸
-        
+        this.passIndex = 1; //关卡索引
     }
     init (){
         this.createMap(); //创建地图
@@ -123,6 +123,8 @@ class Main{
         /* 飞机位置 */
         this.aricraftSprite.position.x += this.aricraftSprite.vx;
         this.aricraftSprite.position.y += this.aricraftSprite.vy;
+        this.aricraftHot.x = this.aricraftSprite.position.x + this.aricraftSprite.width / 2;
+        this.aricraftHot.y = this.aricraftSprite.position.y + this.aricraftSprite.width / 2;
         this.boundaryLimit(this.aricraftSprite); //限制飞出屏幕
 
         /* 子弹位置 */
@@ -176,7 +178,7 @@ class Main{
                 }
             })
             /* 飞机碰撞 */
-            if((!this.aricraftSprite.isInvincible) && hitTestRectangle(item,this.aricraftSprite)){
+            if((!this.aricraftSprite.isInvincible) && hitTestRectangle(item,this.aricraftHot)){
                 this.setHealth();
             }
         })
@@ -190,7 +192,7 @@ class Main{
                 this.container.removeChild(item);
                 this.ParticleContainer.removeChild(item);
             }
-            if(!item.isDest&&(!this.aricraftSprite.isInvincible)&&hitTestRectangle(item,this.aricraftSprite)){
+            if(!item.isDest&&(!this.aricraftSprite.isInvincible)&&hitTestRectangle(item,this.aricraftHot)){
                 item.isDest = true;
                 this.enemy_bulletArr.splice(index,1);
                 this.ParticleContainer.removeChild(item);
@@ -221,10 +223,11 @@ class Main{
         console.log('创建地图')
         this.map = new Map();
         this.mapInit = this.map.init();
-        this.container.addChild(this.mapInit) 
-        // button.buttonMode = true;
-        // this.mapInit.interactive = true;
+        this.container.addChild(this.mapInit);
+        /* this.mapInit.tint = 16391196;
+        this.mapInit.tint = 16777215; //白色 */
     }
+
     /* 创建飞机 */
     createAricraft (){
         // this.aricraftSprite
@@ -256,8 +259,15 @@ class Main{
         this.aricraftSprite.on('pointerup',()=>{
             this.aricraftSprite.removeListener('pointermove')
         })
+        this.aricraftHot = new PIXI.Graphics();
+        this.aricraftHot.beginFill();
+        this.aricraftHot.drawCircle(0, 0, 17);
+        this.aricraftHot.endFill();
+        this.aricraftHot.alpha = 0;
+        this.aricraftHot.x = this.aricraftSprite.position.x + 30;
+        this.aricraftHot.y = this.aricraftSprite.position.y + 30;
 
-        
+        this.container.addChild(this.aricraftHot);
     }
     /* 创建子弹 */
     createBullet (){
@@ -269,7 +279,6 @@ class Main{
     }
     /* 创建敌军 */
     createEnemy (time = this.enemyRefreshSpeed){
-        console.log('生成',this.enemyRefreshSpeed)
         this.timer = setInterval(()=>{
             let _enemy =  this.enemy.init(50+Math.random()*$('.app').width()-70,-150);
             this.container.addChild(_enemy);
@@ -290,9 +299,6 @@ class Main{
     }
     /* 设置积分 */
     setIntegral (value){
-        
-
-
      /*    if(this.integral.value === 10){
             clearInterval(this.timer);
             toast('boss即将上场')
@@ -305,7 +311,8 @@ class Main{
 
         if(this.integral.value % 50 === 0&& this.integral.value!==0){
             clearInterval(this.timer);
-            toast('boss即将上场');
+            toast(`第${this.passIndex}关boss即将上场`);
+            this.passIndex++;
             setTimeout(()=>{
                 this.createBoss();
             },3000)
@@ -392,8 +399,8 @@ class Main{
             let y = py || item.y + item.height/2 + 40;//子弹初始y轴位置
             let texture = sprite || new PIXI.Sprite(PIXI.loader.resources['images/bullet2.png'].texture)
             let rotation = Math.atan2( x - (this.aricraftSprite.x+this.aricraftSprite.width / 2 + 10),y - (this.aricraftSprite.y+this.aricraftSprite.height/2) );
-            let bulletX = bullet_X || -Math.cos(rotation)*3;
-            let bulletY = bullet_Y || -Math.sin(rotation)*3;
+            let bulletX = bullet_X || -Math.cos(rotation)*5;
+            let bulletY = bullet_Y || -Math.sin(rotation)*5;
             let _r = r || rotation
             let circle_bullet = this.bullet.init(
                 texture,
@@ -482,6 +489,21 @@ class Main{
         }, 600);
         this.container.addChild(_enemy);
         this.enemyArr.push(_enemy);
+
+        /* 地图预警 */
+        let params = {
+            color:1
+        }
+        TweenMax.to(params,0.6,{
+            color:0.6,
+            repeat:3,
+            // ease:Bounce.easeOut,
+            onUpdate:()=>{
+                this.mapInit.alpha = params.color;
+            },
+            yoyo:true,
+            yoyoEase:true
+        });
     }
 }
 
