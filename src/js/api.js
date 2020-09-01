@@ -1,4 +1,6 @@
 $(function(){
+
+   
     getRankinglist();
     /* 设置用户名 */
     if(!localStorage.getItem('_userinfo')){
@@ -28,7 +30,8 @@ $(function(){
             }
         })
     })
-    
+    // 访问量
+    $.get('http://47.94.17.117/game/users/visit?name='+localStorage.getItem('_userinfo'),(res)=>{})
 })
 function updataRankinglist(value,name,fn){
     if(value<1)return
