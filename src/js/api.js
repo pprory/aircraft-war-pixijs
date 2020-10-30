@@ -1,6 +1,7 @@
+const DOMAIN = 'http://47.94.17.117:3000/game'; 
 $(function(){
 
-   
+    
     getRankinglist();
     /* 设置用户名 */
     if(!localStorage.getItem('_userinfo')){
@@ -19,7 +20,7 @@ $(function(){
     $('#userName').val(localStorage.getItem('_userinfo'));
     // 点击修改用户名
     $('#submit').click(res=>{
-        $.get('http://47.94.17.117/game/users/set?name='+$('#userName').val(), ( res, status) =>{
+        $.get(DOMAIN+'/users/set?name='+$('#userName').val(), ( res, status) =>{
             if(!status === 'success') return
             if(res.data.use == 0){
                 localStorage.setItem('_userinfo',$('#userName').val())
@@ -31,11 +32,11 @@ $(function(){
         })
     })
     // 访问量
-    $.get('http://47.94.17.117/game/users/visit?name='+localStorage.getItem('_userinfo'),(res)=>{})
+    $.get(DOMAIN+'/users/visit?name='+localStorage.getItem('_userinfo'),(res)=>{})
 })
 function updataRankinglist(value,name,fn){
     if(value<1)return
-    $.post('http://47.94.17.117/game/top/updata',{'name':name,'coin':value}, ( res, status) =>{
+    $.post(DOMAIN+'/top/updata',{'name':name,'coin':value}, ( res, status) =>{
         if(res.code === 1){
             getRankinglist(function(data){
                 if(fn)fn(data);
@@ -45,7 +46,7 @@ function updataRankinglist(value,name,fn){
 }
 function getRankinglist(fn){
     /* 获取排行榜数据 */
-    $.get('http://47.94.17.117/game/top/rankingList', (res, status) =>{
+    $.get(DOMAIN+'/top/rankingList', (res, status) =>{
         if(status === 'success' && res.code === 1){
             $('.ranking-list').html('');
             let wrapper_tr = '';
@@ -64,7 +65,7 @@ function getRankinglist(fn){
     })
 }
 /* 
-http://47.94.17.117/game/top/rankingList  获取排行榜数据
-http://47.94.17.117/game/top/updata  更新排行榜数据
-http://47.94.17.117/game/users/set?name=34 查看用户名是否已使用
+    game/top/rankingList  获取排行榜数据
+    game/top/updata  更新排行榜数据
+    game/users/set?name=34 查看用户名是否已使用
 */
